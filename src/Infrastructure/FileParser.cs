@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using System.Globalization;
 using System.Collections.Generic;
 using ConcurrentDataFileProcessing.src.Domain;
+using Serilog;
 
 namespace ConcurrentDataFileProcessing.src.Infrastructure
 {
@@ -148,6 +149,7 @@ namespace ConcurrentDataFileProcessing.src.Infrastructure
             catch (Exception ex)
             {
                 Console.WriteLine("[ERROR] ParseJson exception: " + ex.Message);
+                Log.Error(ex, "Failed to parse JSON file: {Path}", path);
                 return null;
             }
         }

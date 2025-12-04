@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using ConcurrentDataFileProcessing.src.Infrastructure;
+using Serilog;
 
 namespace ConcurrentDataFileProcessing.src.Processing
 {
@@ -57,7 +58,8 @@ namespace ConcurrentDataFileProcessing.src.Processing
             }
             catch (Exception ex)
             {
-                Console.WriteLine("[ERROR]" + ex);
+                Console.WriteLine("[ERROR]" + ex.Message);
+                Log.Error(ex, "Error processing file: " + job.FilePath);
                 Move(job.FilePath, "output/error");
             }
 

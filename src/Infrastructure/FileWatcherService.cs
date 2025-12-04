@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using Serilog;
 
 namespace ConcurrentDataFileProcessing.src.Infrastructure
 {
@@ -75,6 +76,7 @@ namespace ConcurrentDataFileProcessing.src.Infrastructure
             }
 
             Console.WriteLine($"[WATCHER] Started on {_input}");
+            Log.Information("FileWatcherService started on {InputDirectory}", _input);
         }
 
         /// <summary>
@@ -138,7 +140,7 @@ namespace ConcurrentDataFileProcessing.src.Infrastructure
             catch (Exception ex)
             {
                 Console.WriteLine("[ERROR] Could not enqueue file: " + path);
-                Console.WriteLine(ex.Message);
+                Log.Error(ex, "EnqueueFile failed for file: " + path);
                 MoveToError(path);
             }
         }
@@ -165,6 +167,7 @@ namespace ConcurrentDataFileProcessing.src.Infrastructure
             catch (Exception ex)
             {
                 Console.WriteLine("[ERROR] MoveToProcessed failed: " + ex.Message);
+                Log.Error(ex, "MoveToProcessed failed for file: " + path);
             }
         }
 
@@ -190,6 +193,7 @@ namespace ConcurrentDataFileProcessing.src.Infrastructure
             catch (Exception ex)
             {
                 Console.WriteLine("[ERROR] MoveToError failed: " + ex.Message);
+                Log.Error(ex, "MoveToError failed for file: " + path);
             }
         }
 

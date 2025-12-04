@@ -1,9 +1,10 @@
-﻿using System;
+﻿using ConcurrentDataFileProcessing.src.Infrastructure;
+using ConcurrentDataFileProcessing.src.Processing;
+using Serilog;
+using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Threading.Tasks;
-using System.Collections.Concurrent;
-using ConcurrentDataFileProcessing.src.Processing;
-using ConcurrentDataFileProcessing.src.Infrastructure;
 
 namespace ConcurrentFileProcessor
 {
@@ -14,11 +15,11 @@ namespace ConcurrentFileProcessor
             Console.WriteLine("Concurrent File Processor (.NET Framework 4.8)");
             Console.WriteLine("----------------------------------------------");
 
-            var inputDir = Path.Combine(Directory.GetCurrentDirectory(), "input");
-            if (!Directory.Exists(inputDir))
-                Directory.CreateDirectory(inputDir);
+            InitSerilog();
 
+            var inputDir = EnsureInputDirectory();
             var queue = new BlockingCollection<FileProcessingJob>();
+
             var db = new SqliteRepository("Data Source=data.db");
             db.Init();
 
@@ -28,7 +29,43 @@ namespace ConcurrentFileProcessor
             var watcher = new FileWatcherService(inputDir, queue, "processed", "error");
             watcher.Start();
 
-            for (int i = 0; i < 4; i++)
+            StartWorkers(queue, processor, watcher, workerCount: 4);
+
+            Console.WriteLine("Watching folder: " + inputDir);
+            Console.WriteLine("Drop CSV / JSON files to input directory");
+            Console.WriteLine("Press ENTER to exit.");
+            Console.ReadLine();
+
+            queue.CompleteAdding();
+            watcher.Stop();
+
+            aggregator.PrintMonthlyAndYearlyAverage();
+            Console.WriteLine("Shutting down...");
+        }
+
+        private static string EnsureInputDirectory()
+        {
+            var dir = Path.Combine(Directory.GetCurrentDirectory(), "input");
+            if (!Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+            return dir;
+        }
+
+        private static void InitSerilog()
+        {
+            Log.Logger = new LoggerConfiguration()
+              .MinimumLevel.Debug()         
+              .WriteTo.File("logs/log.txt", rollingInterval: RollingInterval.Day)
+              .CreateLogger();
+        }
+
+        private static void StartWorkers(
+            BlockingCollection<FileProcessingJob> queue,
+            FileProcessor processor,
+            FileWatcherService watcher,
+            int workerCount)
+        {
+            for (int i = 0; i < workerCount; i++)
             {
                 int workerId = i;
                 Console.WriteLine($"Starting Worker {workerId}");
@@ -61,18 +98,6 @@ namespace ConcurrentFileProcessor
                     }
                 }, TaskCreationOptions.LongRunning);
             }
-
-            Console.WriteLine("Watching folder: " + inputDir);
-            Console.WriteLine("Drop CSV / JSON files to input directory");
-            Console.WriteLine("Press ENTER to exit.");
-            Console.ReadLine();
-
-            queue.CompleteAdding();
-            watcher.Stop();
-
-            aggregator.PrintMonthlyAndYearlyAverage();
-
-            Console.WriteLine("Shutting down...");
         }
     }
 }
