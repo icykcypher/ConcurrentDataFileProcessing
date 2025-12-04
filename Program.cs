@@ -1,10 +1,11 @@
-﻿using ConcurrentDataFileProcessing.src.Infrastructure;
-using ConcurrentDataFileProcessing.src.Processing;
+﻿using System;
 using Serilog;
-using System;
-using System.Collections.Concurrent;
 using System.IO;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
+using ConcurrentDataFileProcessing.src.Processing;
+using ConcurrentDataFileProcessing.src.Infrastructure;
+using Microsoft.Extensions.Configuration;
 
 namespace ConcurrentFileProcessor
 {
@@ -17,23 +18,25 @@ namespace ConcurrentFileProcessor
 
             InitSerilog();
 
-            var inputDir = EnsureInputDirectory();
+            var config = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .Build()
+                .Get<AppConfig>();
+
+            var inputDir = EnsureInputDirectory(config.InputDirectory);
             var queue = new BlockingCollection<FileProcessingJob>();
-
-            var db = new SqliteRepository("Data Source=data.db");
-            db.Init();
-
+            var db = new SqliteRepository(config.Database.Path);
+            var watcher = new FileWatcherService(inputDir, queue, config.ProcessedDirectory, config.ErrorDirectory);
             var aggregator = new TemperatureAggregator();
             var processor = new FileProcessor(db, aggregator);
 
-            var watcher = new FileWatcherService(inputDir, queue, "processed", "error");
             watcher.Start();
 
-            StartWorkers(queue, processor, watcher, workerCount: 4);
+            StartWorkers(queue, processor, watcher, workerCount: config.Workers);
 
             Console.WriteLine("Watching folder: " + inputDir);
-            Console.WriteLine("Drop CSV / JSON files to input directory");
-            Console.WriteLine("Press ENTER to exit.");
+            Console.WriteLine("Drop JSON files to input directory");
+            Console.WriteLine("Press ENTER to print results and exit.");
             Console.ReadLine();
 
             queue.CompleteAdding();
@@ -43,9 +46,9 @@ namespace ConcurrentFileProcessor
             Console.WriteLine("Shutting down...");
         }
 
-        private static string EnsureInputDirectory()
+        private static string EnsureInputDirectory(string name)
         {
-            var dir = Path.Combine(Directory.GetCurrentDirectory(), "input");
+            var dir = Path.Combine(Directory.GetCurrentDirectory(), name);
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
             return dir;
