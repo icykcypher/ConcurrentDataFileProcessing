@@ -34,12 +34,16 @@ namespace ConcurrentDataFileProcessing.src.Infrastructure
             {
                 conn.Open();
                 var sql = @"
-                CREATE TABLE IF NOT EXISTS Measurements (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Timestamp TEXT NOT NULL,
-                    Sensor TEXT NOT NULL,
-                    Value REAL NOT NULL
-                );";
+                        DROP TABLE IF EXISTS Measurements;
+
+                        CREATE TABLE Measurements (
+                            Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            Number INTEGER,
+                            Step INTEGER,
+                            Surface REAL,
+                            ValidTime TEXT,
+                            Temperature2m REAL
+                        );";
                 conn.Execute(sql);
             }
         }
@@ -55,14 +59,18 @@ namespace ConcurrentDataFileProcessing.src.Infrastructure
                 conn.Open();
                 using (var trans = conn.BeginTransaction())
                 {
-                    const string insert =
-                        "INSERT INTO Measurements (Timestamp, Sensor, Value) VALUES (@Timestamp, @Sensor, @Value);";
+                    const string insert = @"
+                        INSERT INTO Measurements (Number, Step, Surface, ValidTime, Temperature2m)
+                        VALUES (@Number, @Step, @Surface, @ValidTime, @Temperature2m);
+                    ";
 
                     var rows = measurements.Select(m => new
                     {
-                        Timestamp = m.Timestamp.ToString("o"),
-                        m.Sensor,
-                        m.Value
+                        m.Number,
+                        m.Step,
+                        m.Surface,
+                        ValidTime = m.Timestamp.ToString("o"),
+                        m.Temperature2m
                     });
 
                     conn.Execute(insert, rows, trans);

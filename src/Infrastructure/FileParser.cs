@@ -59,7 +59,7 @@ namespace ConcurrentDataFileProcessing.src.Infrastructure
             int start = 0;
 
             var header = lines[0].ToLowerInvariant();
-            if (header.Contains("timestamp") || header.Contains("sensor"))
+            if (header.Contains("valid_time") || header.Contains("t2m") || header.Contains("surface") || header.Contains("step"))
             {
                 start = 1;
             }
@@ -67,40 +67,36 @@ namespace ConcurrentDataFileProcessing.src.Infrastructure
             for (int i = start; i < lines.Length; i++)
             {
                 var parts = lines[i].Split(',');
-                if (parts.Length < 3)
+                if (parts.Length < 4)
                     continue;
 
-                DateTime ts;
-                if (!DateTime.TryParse(parts[0], null, DateTimeStyles.AdjustToUniversal, out ts))
-                {
-                    long epoch;
-                    if (long.TryParse(parts[0], out epoch))
-                    {
-                        ts = new DateTime(1970, 1, 1).AddSeconds(epoch);
-                    }
-                    else
-                    {
-                        continue;
-                    }
-                }
+                if (!long.TryParse(parts[0], out long epochMillis))
+                    continue;
 
-                var sensor = parts[1].Trim();
+                DateTime ts = DateTimeOffset.FromUnixTimeMilliseconds(epochMillis).UtcDateTime;
 
-                double val;
-                if (!double.TryParse(parts[2], NumberStyles.Any, CultureInfo.InvariantCulture, out val))
+                if (!double.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out double t2m))
+                    continue;
+
+                if (!double.TryParse(parts[2], NumberStyles.Any, CultureInfo.InvariantCulture, out double surface))
+                    continue;
+
+                if (!int.TryParse(parts[3], out int step))
                     continue;
 
                 result.Add(new Measurement
                 {
-                    Id = i,
+                    Number = i,
                     Timestamp = ts,
-                    Sensor = sensor,
-                    Value = val
+                    Temperature2m = t2m - 273.15,
+                    Surface = surface,
+                    Step = step
                 });
             }
 
             return result;
         }
+
 
         /// <summary>
         /// Parses a JSON file containing an array of measurement objects.
@@ -118,27 +114,30 @@ namespace ConcurrentDataFileProcessing.src.Infrastructure
                 var arr = JArray.Parse(txt);
 
                 var list = new List<Measurement>();
-                var i = 1;
+                int i = 1;
+
                 foreach (var el in arr)
                 {
-                    if (el["Timestamp"] == null || el["Sensor"] == null || el["Value"] == null)
+                    if (el["valid_time"] == null || el["t2m"] == null)
                         continue;
 
-                    DateTime ts;
-                    if (!DateTime.TryParse((string)el["Timestamp"], null, DateTimeStyles.AdjustToUniversal, out ts))
+                    if (!long.TryParse(el["valid_time"].ToString(), out long unixMs))
                         continue;
 
-                    var sensor = (string)el["Sensor"] ?? "";
+                    var ts = DateTimeOffset.FromUnixTimeMilliseconds(unixMs).UtcDateTime;
 
-                    double value = 0;
-                    double.TryParse(el["Value"].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out value);
+                    if (!double.TryParse(el["t2m"].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double t2mK))
+                        continue;
+
+                    double t2mC = t2mK - 273.15;
 
                     list.Add(new Measurement
                     {
-                        Id = i,
+                        Number = i,
                         Timestamp = ts,
-                        Sensor = sensor,
-                        Value = value
+                        Surface = el["surface"] != null ? (double)el["surface"] : 0,
+                        Step = el["step"] != null ? (int)el["step"] : 0,
+                        Temperature2m = t2mC
                     });
 
                     i++;
@@ -146,8 +145,9 @@ namespace ConcurrentDataFileProcessing.src.Infrastructure
 
                 return list;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine("[ERROR] ParseJson exception: " + ex.Message);
                 return null;
             }
         }

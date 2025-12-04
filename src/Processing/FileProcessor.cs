@@ -57,7 +57,7 @@ namespace ConcurrentDataFileProcessing.src.Processing
             }
             catch (Exception ex)
             {
-                Console.WriteLine("[ERROR] " + ex.Message);
+                Console.WriteLine("[ERROR]" + ex);
                 Move(job.FilePath, "output/error");
             }
 

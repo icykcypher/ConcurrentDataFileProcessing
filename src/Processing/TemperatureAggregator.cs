@@ -28,17 +28,17 @@ namespace ConcurrentDataFileProcessing.src.Processing
                     .Select(g => new
                     {
                         Month = g.Key,
-                        Avg = g.Average(m => m.Value)
+                        Avg = g.Average(m => m.Temperature2m)
                     });
 
                 Console.WriteLine("Average temperature by monthes: ");
                 foreach (var m in monthly)
-                    Console.WriteLine($"Month {m.Month}: {m.Avg:F2}");
+                    Console.WriteLine($"Month {m.Month}: {m.Avg:F2} °C");
 
                 if (_allMeasurements.Count > 0)
                 {
-                    var yearly = _allMeasurements.Average(m => m.Value);
-                    Console.WriteLine($"Average year temperature: {yearly:F2}");
+                    var yearly = _allMeasurements.Average(m => m.Temperature2m);
+                    Console.WriteLine($"Average year temperature: {yearly:F2} °C");
                 }
             }
         }

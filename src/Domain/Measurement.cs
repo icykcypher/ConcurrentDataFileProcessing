@@ -8,20 +8,28 @@ namespace ConcurrentDataFileProcessing.src.Domain
     public class Measurement
     {
         /// <summary>
-        /// Unique identifier of the measurement
+        /// Unique identifier
         /// </summary>
-        public long Id { get; set; }
+        public long Number { get; set; }
+
         /// <summary>
-        /// DateTime when the measurement was taken.
+        /// Timestamp of the measurement (from epoch milliseconds)
         /// </summary>
         public DateTime Timestamp { get; set; }
+
         /// <summary>
-        /// Name of the sensor that recorded the measurement.
+        /// Surface level (0.0 in your example)
         /// </summary>
-        public string Sensor { get; set; } = string.Empty;
+        public double Surface { get; set; }
+
         /// <summary>
-        /// Recorded value of the measurement.
+        /// Step (forecast step, usually 0)
         /// </summary>
-        public double Value { get; set; }
+        public int Step { get; set; }
+
+        /// <summary>
+        /// Temperature at 2 meters (Kelvin)
+        /// </summary>
+        public double Temperature2m { get; set; }
     }
 }
