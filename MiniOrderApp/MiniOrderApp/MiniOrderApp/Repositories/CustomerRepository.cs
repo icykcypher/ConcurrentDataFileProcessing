@@ -103,4 +103,22 @@ public class CustomerRepository(IConfiguration cfg) : ICustomerRepository
                 await connection.OpenAsync();
                 await cmd.ExecuteNonQueryAsync();
         }
+
+        public async Task<bool> Exists(Customer customer)
+        {
+                using var con = new SqlConnection(_conn);
+                using var cmd = new SqlCommand(
+                        @"SELECT COUNT(1) 
+                                  FROM Customers 
+                                  WHERE Name = @name AND Surname = @surname AND Email = @email", con);
+
+                cmd.Parameters.AddWithValue("@name", customer.Name);
+                cmd.Parameters.AddWithValue("@price", customer.Surname);
+                cmd.Parameters.AddWithValue("@email", customer.Email);
+
+                await con.OpenAsync();
+                var count = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+                
+                return count > 0;
+        }
 }

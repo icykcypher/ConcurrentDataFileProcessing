@@ -90,4 +90,21 @@ public class ProductRepository(IConfiguration cfg) : IProductRepository
         await con.OpenAsync();
         await cmd.ExecuteNonQueryAsync();
     }
+
+    public async Task<bool> Exists(Product product)
+    {
+        using var con = new SqlConnection(_conn);
+        using var cmd = new SqlCommand(
+            @"SELECT COUNT(1) 
+                      FROM Products 
+                      WHERE Name = @name AND Price = @price AND Category = @category", con);
+
+        cmd.Parameters.AddWithValue("@name", product.Name);
+        cmd.Parameters.AddWithValue("@price", product.Price);
+        cmd.Parameters.AddWithValue("@category", (int)product.Category);
+
+        await con.OpenAsync();
+        var count = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+        return count > 0;
+    }
 }

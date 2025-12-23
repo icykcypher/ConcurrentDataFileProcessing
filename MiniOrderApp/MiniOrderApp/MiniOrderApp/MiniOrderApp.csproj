@@ -15,7 +15,6 @@
       <Folder Include="Controllers\" />
       <Folder Include="frontend\" />
       <Folder Include="Migrations\" />
-      <Folder Include="Services\" />
     </ItemGroup>
 
 </Project>

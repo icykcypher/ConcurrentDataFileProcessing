@@ -9,4 +9,5 @@ public interface ICustomerRepository
         Task<Customer> Add(Customer c);
         Task<Customer> Update(Customer customer);
         Task Delete(int id);
+        Task<bool> Exists(Customer customer);
 }
