@@ -13,7 +13,7 @@
 
     <ItemGroup>
       <Folder Include="frontend\" />
-      <Folder Include="Migrations\" />
+      <Folder Include="Sql\" />
     </ItemGroup>
 
 </Project>
