@@ -1,17 +1,22 @@
-CREATE
-DATABASE MiniOrderApp;
+IF DB_ID('MiniOrderDb') IS NOT NULL
+    DROP DATABASE MiniOrderDb;
 GO
 
-USE MiniOrderApp;
+CREATE DATABASE MiniOrderDb;
+GO
+
+USE MiniOrderDb;
 GO
 
 CREATE TABLE Customers
 (
     Id       INT IDENTITY PRIMARY KEY,
+    Surname  NVARCHAR(100) NOT NULL,
     Name     NVARCHAR(100) NOT NULL,
     Email    NVARCHAR(150) NOT NULL UNIQUE,
     IsActive BIT NOT NULL DEFAULT 1
 );
+GO
 
 CREATE TABLE Products
 (
@@ -21,6 +26,17 @@ CREATE TABLE Products
     Category NVARCHAR(30) NOT NULL
         CHECK (Category IN ('Electronics', 'Food', 'Clothing'))
 );
+GO
+
+CREATE TABLE Orders
+(
+    Id         INT IDENTITY PRIMARY KEY,
+    CustomerId INT NOT NULL,
+    OrderDate  DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    Status     NVARCHAR(30) NOT NULL DEFAULT 'Pending',
+    FOREIGN KEY (CustomerId) REFERENCES Customers(Id)
+);
+GO
 
 CREATE TABLE OrderItems
 (
@@ -28,15 +44,11 @@ CREATE TABLE OrderItems
     ProductId    INT   NOT NULL,
     Quantity     INT   NOT NULL CHECK (Quantity > 0),
     PriceAtOrder FLOAT NOT NULL CHECK (PriceAtOrder >= 0),
-
     CONSTRAINT PK_OrderItems PRIMARY KEY (OrderId, ProductId),
-
-    CONSTRAINT FK_OrderItems_Orders
-        FOREIGN KEY (OrderId) REFERENCES Orders (Id) ON DELETE CASCADE,
-
-    CONSTRAINT FK_OrderItems_Products
-        FOREIGN KEY (ProductId) REFERENCES Products (Id)
+    CONSTRAINT FK_OrderItems_Orders FOREIGN KEY (OrderId) REFERENCES Orders (Id) ON DELETE CASCADE,
+    CONSTRAINT FK_OrderItems_Products FOREIGN KEY (ProductId) REFERENCES Products (Id)
 );
+GO
 
 CREATE TABLE Payments
 (
@@ -45,29 +57,31 @@ CREATE TABLE Payments
     Amount       FLOAT     NOT NULL CHECK (Amount >= 0),
     PaidAt       DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     IsSuccessful BIT       NOT NULL,
-
-    CONSTRAINT FK_Payments_Orders
-        FOREIGN KEY (OrderId) REFERENCES Orders (Id)
+    CONSTRAINT FK_Payments_Orders FOREIGN KEY (OrderId) REFERENCES Orders (Id)
 );
+GO
 
 CREATE VIEW vw_CustomerOrderSummary AS
-SELECT c.Id                               AS CustomerId,
-       c.Name,
-       COUNT(o.Id)                        AS TotalOrders,
-       SUM(oi.Quantity * oi.PriceAtOrder) AS TotalSpent
+SELECT
+    c.Id                               AS CustomerId,
+    c.Name,
+    COUNT(o.Id)                        AS TotalOrders,
+    ISNULL(SUM(oi.Quantity * oi.PriceAtOrder),0) AS TotalSpent
 FROM Customers c
          LEFT JOIN Orders o ON o.CustomerId = c.Id
          LEFT JOIN OrderItems oi ON oi.OrderId = o.Id
 GROUP BY c.Id, c.Name;
+GO
 
 CREATE VIEW vw_ProductSalesSummary AS
-SELECT p.Id                               AS ProductId,
-       p.Name,
-       SUM(oi.Quantity)                   AS TotalQuantitySold,
-       SUM(oi.Quantity * oi.PriceAtOrder) AS TotalRevenue,
-       MIN(oi.PriceAtOrder)               AS MinPrice,
-       MAX(oi.PriceAtOrder)               AS MaxPrice
+SELECT
+    p.Id                               AS ProductId,
+    p.Name,
+    ISNULL(SUM(oi.Quantity),0)                   AS TotalQuantitySold,
+    ISNULL(SUM(oi.Quantity * oi.PriceAtOrder),0) AS TotalRevenue,
+    MIN(oi.PriceAtOrder)               AS MinPrice,
+    MAX(oi.PriceAtOrder)               AS MaxPrice
 FROM Products p
          LEFT JOIN OrderItems oi ON oi.ProductId = p.Id
 GROUP BY p.Id, p.Name;
-
+GO

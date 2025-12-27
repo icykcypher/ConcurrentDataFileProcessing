@@ -14,7 +14,7 @@ public class CustomerRepository(IConfiguration cfg) : ICustomerRepository
                 var list = new List<Customer>();
                 
                 using var connection = new SqlConnection(_conn);
-                using var cmd = new SqlCommand("SELECT Id, Name, Email, IsActive FROM Customers", connection);
+                using var cmd = new SqlCommand("SELECT Id, Name, Surname, Email, IsActive FROM Customers", connection);
                 
                 await connection.OpenAsync();
                 var reader = await cmd.ExecuteReaderAsync();
@@ -25,8 +25,9 @@ public class CustomerRepository(IConfiguration cfg) : ICustomerRepository
                         {
                                 Id = reader.GetInt32(0),
                                 Name = reader.GetString(1),
-                                Email = reader.GetString(2),
-                                IsActive = reader.GetBoolean(3)
+                                Surname = reader.GetString(2),
+                                Email = reader.GetString(3),
+                                IsActive = reader.GetBoolean(4)
                         });
                 }
 
@@ -61,10 +62,11 @@ public class CustomerRepository(IConfiguration cfg) : ICustomerRepository
         {
                 using var connection = new SqlConnection(_conn);
                 using var cmd = new SqlCommand(
-                        "INSERT INTO Customers (Name, Email, IsActive) VALUES (@name, @email, @active); SELECT SCOPE_IDENTITY();",
+                        "INSERT INTO Customers (Name, Surname, Email, IsActive) VALUES (@name, @surname, @email, @active); SELECT SCOPE_IDENTITY();",
                         connection);
                 
                 cmd.Parameters.AddWithValue("@name", customer.Name);
+                cmd.Parameters.AddWithValue("@surname", customer.Surname);
                 cmd.Parameters.AddWithValue("@email", customer.Email);
                 cmd.Parameters.AddWithValue("@active", customer.IsActive);
                 
@@ -80,10 +82,11 @@ public class CustomerRepository(IConfiguration cfg) : ICustomerRepository
         {
                 using var connection = new SqlConnection(_conn);
                 using var cmd = new SqlCommand(
-                        "UPDATE Customers SET Name=@name, Email=@email, IsActive=@active WHERE Id=@id", connection);
+                        "UPDATE Customers SET Name=@name, Surname=@surname,Email=@email, IsActive=@active WHERE Id=@id", connection);
                 
                 cmd.Parameters.AddWithValue("@id", customer.Id);
                 cmd.Parameters.AddWithValue("@name", customer.Name);
+                cmd.Parameters.AddWithValue("@surname", customer.Surname);
                 cmd.Parameters.AddWithValue("@email", customer.Email);
                 cmd.Parameters.AddWithValue("@active", customer.IsActive);
                 
@@ -113,6 +116,7 @@ public class CustomerRepository(IConfiguration cfg) : ICustomerRepository
                                   WHERE Name = @name AND Surname = @surname AND Email = @email", con);
 
                 cmd.Parameters.AddWithValue("@name", customer.Name);
+                cmd.Parameters.AddWithValue("@surname", customer.Surname);
                 cmd.Parameters.AddWithValue("@price", customer.Surname);
                 cmd.Parameters.AddWithValue("@email", customer.Email);
 

@@ -46,7 +46,8 @@ public class ImportService(
                 var parser = new CsvParser<CustomerImportDto>(p => new CustomerImportDto
                 {
                         Name = p[0],
-                        Email = p[1]
+                        Surname = p[1],
+                        Email = p[2]
                 });
 
                 int count = 0;
@@ -56,6 +57,7 @@ public class ImportService(
                         var customer = new Customer
                         {
                                 Name = dto.Name,
+                                Surname = dto.Surname,
                                 Email = dto.Email
                         };
 

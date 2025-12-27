@@ -30,6 +30,7 @@ public class CustomersController(ICustomerService service) : ControllerBase
         var customer = new Customer
         {
             Name = dto.Name,
+            Surname = dto.Surname,
             Email = dto.Email,
             IsActive = dto.IsActive
         };
@@ -45,6 +46,7 @@ public class CustomersController(ICustomerService service) : ControllerBase
         {
             Id = id,
             Name = dto.Name,
+            Surname = dto.Surname,
             Email = dto.Email,
             IsActive = dto.IsActive
         };

@@ -18,7 +18,7 @@ public class CsvParser<T>(Func<string[], T> map) : ICsvParser<T>
                                 continue;
                         }
 
-                        var parts = line.Split(';');
+                        var parts = line.Split(',');
                         yield return map(parts);
                 }
         }

@@ -24,7 +24,7 @@ public class ProductRepository(IConfiguration cfg) : IProductRepository
                 Id = reader.GetInt32(0),
                 Name = reader.GetString(1),
                 Price = (float)reader.GetDouble(2), 
-                Category = (ProductCategory)reader.GetInt32(3)
+                Category = Enum.Parse<ProductCategory>(reader.GetString(3))
             });
         }
         return list;
@@ -45,7 +45,7 @@ public class ProductRepository(IConfiguration cfg) : IProductRepository
                 Id = reader.GetInt32(0),
                 Name = reader.GetString(1),
                 Price = (float)reader.GetDouble(2),
-                Category = (ProductCategory)reader.GetInt32(3)
+                Category = Enum.Parse<ProductCategory>(reader.GetString(3))
             };
         }
         return null!; 
@@ -58,7 +58,7 @@ public class ProductRepository(IConfiguration cfg) : IProductRepository
             "INSERT INTO Products (Name, Price, Category) VALUES (@name, @price, @category); SELECT SCOPE_IDENTITY();", con);
         cmd.Parameters.AddWithValue("@name", product.Name);
         cmd.Parameters.AddWithValue("@price", product.Price);
-        cmd.Parameters.AddWithValue("@category", (int)product.Category);
+        cmd.Parameters.AddWithValue("@category", product.Category.ToString());
         await con.OpenAsync();
         var id = await cmd.ExecuteScalarAsync();
         product.Id = Convert.ToInt32(id);
@@ -74,7 +74,7 @@ public class ProductRepository(IConfiguration cfg) : IProductRepository
         cmd.Parameters.AddWithValue("@id", product.Id);
         cmd.Parameters.AddWithValue("@name", product.Name);
         cmd.Parameters.AddWithValue("@price", product.Price);
-        cmd.Parameters.AddWithValue("@category", (int)product.Category);
+        cmd.Parameters.AddWithValue("@category", product.Category.ToString());
         await con.OpenAsync();
         await cmd.ExecuteNonQueryAsync();
 
@@ -101,7 +101,7 @@ public class ProductRepository(IConfiguration cfg) : IProductRepository
 
         cmd.Parameters.AddWithValue("@name", product.Name);
         cmd.Parameters.AddWithValue("@price", product.Price);
-        cmd.Parameters.AddWithValue("@category", (int)product.Category);
+        cmd.Parameters.AddWithValue("@category",product.Category.ToString());
 
         await con.OpenAsync();
         var count = Convert.ToInt32(await cmd.ExecuteScalarAsync());
