@@ -1,3 +1,5 @@
+BEGIN TRANSACTION;
+
 IF DB_ID('MiniOrderDb') IS NOT NULL
     DROP DATABASE MiniOrderDb;
 GO
@@ -7,6 +9,14 @@ GO
 
 USE MiniOrderDb;
 GO
+
+CREATE LOGIN MiniOrderAppLogin WITH PASSWORD = 'StrongPassword123!';
+CREATE USER MiniOrderAppUser FOR LOGIN MiniOrderAppLogin;
+
+ALTER ROLE db_datareader ADD MEMBER MiniOrderAppUser;
+ALTER ROLE db_datawriter ADD MEMBER MiniOrderAppUser;
+ALTER ROLE db_ddladmin ADD MEMBER MiniOrderAppUser;
+ALTER ROLE db_owner ADD MEMBER MiniOrderAppUser;
 
 CREATE TABLE Customers
 (
@@ -85,3 +95,9 @@ FROM Products p
          LEFT JOIN OrderItems oi ON oi.ProductId = p.Id
 GROUP BY p.Id, p.Name;
 GO
+
+COMMIT;
+
+INSERT INTO Customers(Name, Surname, Email, IsActive) VALUES('John','Doe','john@example.com',1);
+INSERT INTO Products(Name, Price, Stock) VALUES('Product A', 100, 10);
+COMMIT;
