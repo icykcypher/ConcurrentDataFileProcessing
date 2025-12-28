@@ -23,7 +23,7 @@ public class Program
             options.AddPolicy(LocalCorsPolicy, policy =>
             {
                 policy
-                    .WithOrigins("http://localhost:3000")
+                    .WithOrigins("http://localhost:5173")
                     .AllowAnyHeader()
                     .AllowAnyMethod();
             });
@@ -31,14 +31,19 @@ public class Program
 
         builder.Services.AddScoped<IProductRepository, ProductRepository>();
         builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-
+        builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+        builder.Services.AddScoped<IPaymentService, PaymentService>();
+        
+        builder.Services.AddScoped<IOrderService, OrderService>();
         builder.Services.AddScoped<IProductService, ProductService>();
         builder.Services.AddScoped<ICustomerService, CustomerService>();
         builder.Services.AddScoped<IImportService, ImportService>();
 
         var app = builder.Build();
 
-        app.UseMiddleware<GlobalExceptionMiddleware>();
+        //app.UseMiddleware<GlobalExceptionMiddleware>();
+        app.UseStaticFiles();
+        app.MapFallbackToFile("index.html");
         
         if (app.Environment.IsDevelopment())
         {

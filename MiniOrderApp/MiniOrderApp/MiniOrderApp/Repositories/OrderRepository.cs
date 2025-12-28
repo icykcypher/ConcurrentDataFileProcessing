@@ -35,7 +35,7 @@ public class OrderRepository(IConfiguration cfg) : IOrderRepository
                         {
                                 var itemCmd = new SqlCommand(
                                         """
-                                        INSERT INTO OrderItems (OrderId, ProductId, Quantity, UnitPrice)
+                                        INSERT INTO OrderItems (OrderId, ProductId, Quantity, PriceAtOrder)
                                         VALUES (@orderId, @productId, @qty, @price)
                                         """, con, tx);
 
