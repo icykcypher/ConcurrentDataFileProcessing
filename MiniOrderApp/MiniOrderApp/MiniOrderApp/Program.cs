@@ -41,7 +41,7 @@ public class Program
 
         var app = builder.Build();
 
-        //app.UseMiddleware<GlobalExceptionMiddleware>();
+        app.UseMiddleware<GlobalExceptionMiddleware>();
         app.UseStaticFiles();
         app.MapFallbackToFile("index.html");
         
